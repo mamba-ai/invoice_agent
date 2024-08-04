@@ -5,7 +5,7 @@ import streamlit as st
 import pypdfium2 
 from PIL import Image
 
-from agent import load_models, get_ocr_predictions, get_json_result
+from agent import load_models, get_ocr_predictions, get_json_result, json_to_excel_with_links
 
 
 def open_pdf(pdf_file):
@@ -69,6 +69,22 @@ with col1:
     st.write("## アップロードされたファイル")
     st.image(pil_image, caption="アップロードされたファイル", use_column_width=True)
     
+if 'json_predictions' in st.session_state:
+    prev_json_predictions = st.session_state.json_predictions
+    prev_excel_file_path = st.session_state.excel_file_path
+    with col2:
+        st.write("## 結果")
+        # 提供下载链接
+        with open(prev_excel_file_path, "rb") as file:
+            st.download_button(
+                label="Download Excel",
+                data=file,
+                file_name="output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        st.write("解析後の内容:")
+        st.json(prev_json_predictions)
+    
 if text_rec:
     with col2:
         st.write("## 結果")
@@ -83,12 +99,28 @@ if text_rec:
             
             # Simulate OCR result as a JSON object
             json_predictions = get_json_result(predictions)
+            st.session_state.json_predictions = json_predictions
+            
+            # Convert JSON to Excel
+            excel_file_path = "output.xlsx"
+            st.session_state.excel_file_path = excel_file_path
+            json_to_excel_with_links(json_predictions, excel_file_path)
             
             # After model finishes
             status_placeholder.success('ファイルの解析が完了しました!')
             
-            # Display the result
-            st.write("解析後の内容:")
-            st.json(json_predictions)
-            # st.write(predictions)
+        # 提供下载链接
+        with open(excel_file_path, "rb") as file:
+            st.download_button(
+                label="Download Excel",
+                data=file,
+                file_name="output.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            
+        # Display the result
+        st.write("解析後の内容:")
+        # st.json(json_predictions)
+        st.json(st.session_state.json_predictions)
+        # st.write(predictions)
     
