@@ -42,7 +42,10 @@ st.title("""
 
 col1, _, col2 = st.columns([.45, 0.1, .45])
 
-in_file = st.sidebar.file_uploader("PDF file or image:", type=["pdf", "png", "jpg", "jpeg", "gif", "webp"])
+in_file = st.sidebar.file_uploader(
+    "PDFファイルまたは画像:", 
+    type=["pdf", "png", "jpg", "jpeg", "gif", "webp"],
+    )
 
 if in_file is None:
     st.stop()
@@ -51,29 +54,29 @@ filetype = in_file.type
 whole_image = False
 if "pdf" in filetype:
     page_count = page_count(in_file)
-    page_number = st.sidebar.number_input(f"Page number out of {page_count}:", min_value=1, value=1, max_value=page_count)
+    page_number = st.sidebar.number_input(f"ページ番号 {page_count}:", min_value=1, value=1, max_value=page_count)
 
     pil_image = get_page_image(in_file, page_number)
 else:
     pil_image = Image.open(in_file).convert("RGB")
 
-text_rec = st.sidebar.button("Run OCR")
+text_rec = st.sidebar.button("認識開始")
 
 if pil_image is None:
     st.stop()
     
 with col1:
-    st.write("## Uploaded Image")
-    st.image(pil_image, caption="Uploaded Image", use_column_width=True)
+    st.write("## アップロードされたファイル")
+    st.image(pil_image, caption="アップロードされたファイル", use_column_width=True)
     
 if text_rec:
     with col2:
-        st.write("## Results")
+        st.write("## 結果")
         
         # Placeholder for status indicator
         status_placeholder = st.empty()
         
-        with st.spinner('Model is running...'):
+        with st.spinner('現在ファイルを解析中です'):
             # Simulate model running time
             # time.sleep(5)  # Replace this with actual model running code
             predictions = get_ocr_predictions(pil_image, models)
@@ -82,10 +85,10 @@ if text_rec:
             json_predictions = get_json_result(predictions)
             
             # After model finishes
-            status_placeholder.success('Model has finished running!')
+            status_placeholder.success('ファイルの解析が完了しました!')
             
             # Display the result
-            st.write("OCR Result:")
+            st.write("解析後の内容:")
             st.json(json_predictions)
             # st.write(predictions)
     
