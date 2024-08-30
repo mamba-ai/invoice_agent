@@ -66,7 +66,7 @@ def ocr_invoice(base64_image_string):
     media_type = f"image/{image_type}"
     
     # Perform OCR on the image
-    message = client.messages.create(
+    message = claude_client.messages.create(
         model="claude-3-5-sonnet-20240620",
         max_tokens=3000,
         temperature=0,
