@@ -18,13 +18,13 @@ from surya.model.detection import model
 from surya.model.recognition.model import load_model as load_rec_model
 from surya.model.recognition.processor import load_processor as load_rec_processor
 import openai
-import anthropic
+# import anthropic
 
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', None)
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", None)
-claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+# ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", None)
+# claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", None)
 openrouter_client = OpenAI(
   base_url="https://openrouter.ai/api/v1",
