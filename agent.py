@@ -4,6 +4,7 @@ import os
 import io 
 import base64
 import imghdr
+from openai import OpenAI
 
 import json
 import pandas as pd
@@ -24,7 +25,32 @@ OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', None)
 client = openai.OpenAI(api_key=OPENAI_API_KEY)
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", None)
 claude_client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", None)
+openrouter_client = OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key=OPENROUTER_API_KEY,
+)
 LANGUAGES = ["ja", "en"]
+json_example = '''
+{
+     "title": "領収書/請求書",
+     "recipient": "OOXX株式会社",
+     "issue_date": "OO年OO月OO日",
+     "description": "飲食代",
+     "issuer": "XXOO株式会社",
+     "post_code": "123-4567",
+     "address": "東京都千代田区駿河台2-2",
+     "tel": "987-6543-210",
+     "registration_number": "T9010901044466", # optonal
+     "before_tax_10_percentage": 60000, # optonal
+     "tax_10_percentage": 6000, # optonal
+     "before_tax_8_percentage": 10000, # optonal
+     "tax_8_percentage": 800, # optonal
+     "amount_before_tax": 70000, # optonal
+     "total_amount": 76800,
+     "items": [],
+}
+'''
 
 
 def pil_image_to_base64(pil_image):
@@ -96,10 +122,60 @@ def ocr_invoice(base64_image_string):
     # Return the content of the message
     return message.content[0].text
 
+def ocr_invoice_openrouter(base64_image_string):
+    """
+    Perform OCR on an invoice image and convert the result to a JSON object.
+
+    :param image_path: Path to the invoice image file.
+    :return: JSON object containing the parsed invoice data.
+    """
+    # Convert the image to a base64 string
+    # base64_image_string = base64_to_webp_and_back(base64_image_string)
+    image_type = detect_image_type(base64_image_string)
+    media_type = f"image/{image_type}"
+    
+    completion = client.chat.completions.create(
+        extra_headers={
+            "X-Title": "MAMBA-AI", # Optional. Shows in rankings on openrouter.ai.
+        },
+        model="anthropic/claude-3.5-sonnet",
+        max_tokens=3000,
+        temperature=0,
+        response_format={ "type": "json_object" },
+        messages=[
+            {
+                "role": "system",
+                "content": "You are a helpful OCR assistant designed to recognize content from image and output JSON.",
+            },
+            {
+                "role": "user",
+                "content":[
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:{media_type};base64,{base64_image_string}",
+                        }
+                    },
+                    {
+                        "type": "text",
+                        "text": f'''You are OCR expert, parse, detect, recognize and convert following receipt/invoice image result into structure receipt data object.
+Don't make up value not in the Input. Don't lose any information.
+Only response json object is needed. No need to response any other information.
+Output must be a well-formed JSON format. Following is an example of the JSON object: 
+{json_example}
+If you can't find the value, please leave it null.
+'''
+                    }
+                ]
+            }
+        ],
+    )
+    return completion.choices[0].message.content
+
 
 def get_json_result_v2(pil_image, models):
     base64_image_string = pil_image_to_base64(pil_image)
-    json_result = ocr_invoice(base64_image_string)
+    json_result = ocr_invoice_openrouter(base64_image_string)
     return json_result 
 
 @st.cache_resource()
