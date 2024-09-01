@@ -134,7 +134,7 @@ def ocr_invoice_openrouter(base64_image_string):
     image_type = detect_image_type(base64_image_string)
     media_type = f"image/{image_type}"
     
-    completion = client.chat.completions.create(
+    completion = openrouter_client.chat.completions.create(
         extra_headers={
             "X-Title": "MAMBA-AI", # Optional. Shows in rankings on openrouter.ai.
         },
